@@ -1,0 +1,41 @@
+name: Sync upstream
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+  issues: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Merge upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git remote add upstream https://github.com/ghostty-org/ghostty.git
+          git fetch upstream main
+          git config user.name "fastty-bot"
+          git config user.email "fastty-bot@users.noreply.github.com"
+          SHA=$(git rev-parse upstream/main)
+          if git merge --no-edit upstream/main; then
+            git push origin main
+          else
+            FILES=$(git diff --name-only --diff-filter=U)
+            git merge --abort
+            TITLE="Upstream sync conflict $(date -u +%F)"
+            BODY=$(printf 'Merge of upstream/main (%s) conflicted in:\n\n```\n%s\n```\n' "$SHA" "$FILES")
+            N=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number')
+            if [ -n "$N" ]; then
+              gh issue edit "$N" --body "$BODY"
+            else
+              gh issue create --title "$TITLE" --body "$BODY"
+            fi
+            exit 1
+          fi
