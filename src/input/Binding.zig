@@ -568,6 +568,10 @@ pub const Action = union(enum) {
     /// Go to the last tab.
     last_tab,
 
+    /// Go to the most recently used (previously selected) tab. Pressing
+    /// it repeatedly toggles between the two most recent tabs.
+    last_used_tab,
+
     /// Go to the tab with the specific index, starting from 1.
     ///
     /// If the tab number is higher than the number of tabs,
@@ -1447,6 +1451,7 @@ pub const Action = union(enum) {
             .previous_tab,
             .next_tab,
             .last_tab,
+            .last_used_tab,
             .goto_tab,
             .move_tab,
             .move_tab_to_new_window,

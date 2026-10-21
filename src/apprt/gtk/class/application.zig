@@ -2330,6 +2330,8 @@ const Action = struct {
                 };
 
                 return window.selectTab(switch (tab) {
+                    // ponytail: macOS-only for now; GTK needs selected-page history in window.zig.
+                    .last_used => return false,
                     .previous => .previous,
                     .next => .next,
                     .last => .last,

@@ -1724,6 +1724,10 @@ class: ?[:0]const u8 = null,
 ///   * `text:text` - Send a string. Uses Zig string literal syntax.
 ///     e.g. `text:\x15` sends Ctrl-U.
 ///
+///   * `last_used_tab` - Go to the previously selected tab. Pressing it
+///     again toggles back, e.g. `keybind = ctrl+tab=last_used_tab`.
+///     macOS only for now.
+///
 ///   * All other actions can be found in the documentation or by using the
 ///     `ghostty +list-actions` command.
 ///
