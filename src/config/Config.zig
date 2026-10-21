@@ -3098,6 +3098,26 @@ else
 /// Available since: 1.2.0
 @"command-palette-entry": RepeatableCommand = .{},
 
+/// Fastty: agents for the agent launcher (`new_agent_split`, `new_agent_tab`).
+/// Each value is `title=command` and may be repeated:
+///
+/// ```ini
+/// agent-command = Claude=claude
+/// agent-command = Codex=codex
+/// ```
+///
+/// The first entry is the default; actions can pick another by title, e.g.
+/// `new_agent_split:right:Codex`. The command is typed into the new
+/// surface's shell (inheriting the working directory), so it runs with your
+/// shell's PATH and the pane returns to the shell when the agent exits.
+/// The first configured value replaces the default list; an empty value
+/// clears it. Each entry also gets "New Agent Split (title)" and
+/// "New Agent Tab (title)" command palette entries.
+///
+/// Default: `Claude=claude`. Default keybind: `cmd+shift+n` (macOS) for
+/// `new_agent_split:right`.
+@"agent-command": RepeatableString = .{},
+
 /// Sets the reporting format for OSC sequences that request color information.
 /// Ghostty currently supports OSC 10 (foreground), OSC 11 (background), and
 /// OSC 4 (256 color palette) queries, and by default the reported values
@@ -4154,6 +4174,10 @@ pub fn default(alloc_gpa: Allocator) Allocator.Error!Config {
     // Add our default command palette entries
     try result.@"command-palette-entry".init(alloc);
 
+    // Default agent for the agent launcher; the first user value replaces it.
+    try result.@"agent-command".list.append(alloc, "Claude=claude");
+    result.@"agent-command".overwrite_next = true;
+
     // Add our default link for URL detection
     try result.link.links.append(alloc, .{
         .regex = url.regex,
@@ -5024,6 +5048,25 @@ pub fn finalize(self: *Config) !void {
 
     // Finalize key remapping set for efficient lookups
     self.@"key-remap".finalize();
+
+    // Agent launcher command palette entries, one pair per agent-command.
+    for (self.@"agent-command".list.items) |entry| {
+        const title = entry[0 .. std.mem.indexOfScalar(u8, entry, '=') orelse entry.len];
+        const cmds = [_]inputpkg.Command{
+            .{
+                .title = try std.fmt.allocPrintSentinel(alloc, "New Agent Split ({s})", .{title}, 0),
+                .action = .{ .new_agent_split = try std.fmt.allocPrint(alloc, "right:{s}", .{title}) },
+            },
+            .{
+                .title = try std.fmt.allocPrintSentinel(alloc, "New Agent Tab ({s})", .{title}, 0),
+                .action = .{ .new_agent_tab = title },
+            },
+        };
+        for (cmds) |cmd| {
+            try self.@"command-palette-entry".value.append(alloc, cmd);
+            try self.@"command-palette-entry".value_c.append(alloc, try cmd.cval(alloc));
+        }
+    }
 }
 
 /// Callback for src/cli/args.zig to allow us to handle special cases
@@ -7336,6 +7379,11 @@ pub const Keybinds = struct {
                 alloc,
                 .{ .key = .{ .unicode = 'n' }, .mods = .{ .super = true } },
                 .{ .new_window = {} },
+            );
+            try self.set.put(
+                alloc,
+                .{ .key = .{ .unicode = 'n' }, .mods = .{ .super = true, .shift = true } },
+                .{ .new_agent_split = "right" },
             );
             try self.set.put(
                 alloc,

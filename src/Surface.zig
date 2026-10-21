@@ -138,6 +138,11 @@ io_thr: std.Thread,
 /// Terminal inspector
 inspector: ?*inspectorpkg.Inspector = null,
 
+/// Fastty agent launcher: agent title ("" = first `agent-command`) set only
+/// while a new_agent_* action performs its new_split/new_tab. The apprt reads
+/// it when building the child surface's inherited config.
+pending_agent: ?[]const u8 = null,
+
 /// All our sizing information.
 size: rendererpkg.Size,
 
@@ -5237,7 +5242,27 @@ fn showMouse(self: *Surface) void {
 /// NOTE: At the time of writing this comment, only previous/next tab
 /// will ever return false. We can expand this in the future if it becomes
 /// useful. We did previous/next tab so we could implement #498.
-pub fn performBindingAction(self: *Surface, action: input.Binding.Action) !bool {
+pub fn performBindingAction(self: *Surface, action_: input.Binding.Action) !bool {
+    // ponytail: agent launcher = plain new_split/new_tab plus a pending
+    // agent title that the apprt turns into initial input for the child.
+    const action: input.Binding.Action = switch (action_) {
+        .new_agent_split => |v| action: {
+            var it = std.mem.splitScalar(u8, v, ':');
+            const dir = std.meta.stringToEnum(
+                input.Binding.Action.SplitDirection,
+                it.first(),
+            ) orelse .right;
+            self.pending_agent = it.rest();
+            break :action .{ .new_split = dir };
+        },
+        .new_agent_tab => |v| action: {
+            self.pending_agent = v;
+            break :action .new_tab;
+        },
+        else => action_,
+    };
+    defer self.pending_agent = null;
+
     // Forward app-scoped actions to the app. Some app-scoped actions are
     // special-cased here because they do some special things when performed
     // from the surface.
@@ -5272,6 +5297,8 @@ pub fn performBindingAction(self: *Surface, action: input.Binding.Action) !bool 
     }
 
     switch (action.scoped(.surface).?) {
+        .new_agent_split, .new_agent_tab => unreachable, // rewritten above
+
         .csi, .esc => |data| {
             // We need to send the CSI/ESC sequence as a single write request.
             // If you split it across two then the shell can interpret it

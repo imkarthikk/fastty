@@ -649,6 +649,18 @@ pub const Action = union(enum) {
     ///
     new_split: SplitDirection,
 
+    /// Fastty: create a new split running an agent from `agent-command`.
+    ///
+    /// The parameter is a split direction (see `new_split`), optionally
+    /// followed by `:` and an agent title, e.g. `new_agent_split:right` or
+    /// `new_agent_split:down:Codex`. Without a title (or with an unknown
+    /// one) the first `agent-command` is used.
+    new_agent_split: []const u8,
+
+    /// Fastty: like `new_agent_split` but opens a new tab. Optional
+    /// parameter is the agent title, e.g. `new_agent_tab:Codex`.
+    new_agent_tab: []const u8,
+
     /// Focus on a split either in the specified direction (`right`, `down`,
     /// `left` and `up`), or in the adjacent split in the order of creation
     /// (`previous` and `next`).
@@ -1346,7 +1358,11 @@ pub const Action = union(enum) {
                     },
 
                     []const u8 => {
-                        const idx = colonIdx orelse return Error.InvalidFormat;
+                        // ponytail: new_agent_tab is the only string action whose param is optional.
+                        const idx = colonIdx orelse if (comptime std.mem.eql(u8, field, "new_agent_tab"))
+                            return @unionInit(Action, field, "")
+                        else
+                            return Error.InvalidFormat;
                         const param = input[idx + 1 ..];
                         return @unionInit(Action, field, param);
                     },
@@ -1532,6 +1548,8 @@ pub const Action = union(enum) {
             .move_tab_to_new_window,
             .toggle_tab_overview,
             .new_split,
+            .new_agent_split,
+            .new_agent_tab,
             .goto_split,
             .goto_window,
             .toggle_split_zoom,
@@ -3470,6 +3488,14 @@ test "parse: action with string" {
         try testing.expect(binding.action == .set_tab_title);
         try testing.expectEqualStrings("tab", binding.action.set_tab_title);
     }
+}
+
+test "parse: agent launcher actions" {
+    const testing = std.testing;
+    try testing.expectEqualStrings("", (try parseSingle("a=new_agent_tab")).action.new_agent_tab);
+    try testing.expectEqualStrings("Codex", (try parseSingle("a=new_agent_tab:Codex")).action.new_agent_tab);
+    try testing.expectEqualStrings("down:Codex", (try parseSingle("a=new_agent_split:down:Codex")).action.new_agent_split);
+    try testing.expectError(Error.InvalidFormat, parseSingle("a=new_agent_split"));
 }
 
 test "parse: action with enum" {

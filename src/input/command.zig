@@ -767,6 +767,11 @@ fn actionCommands(action: Action.Key) []const Command {
         .last_used_tab,
         => comptime &.{},
 
+        // Generated per `agent-command` in Config.finalize.
+        .new_agent_split,
+        .new_agent_tab,
+        => comptime &.{},
+
         // No commands for obvious reasons
         .ignore,
         .unbind,
