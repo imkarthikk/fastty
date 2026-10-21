@@ -578,6 +578,7 @@ pub const GotoTab = enum(c_int) {
     previous = -1,
     next = -2,
     last = -3,
+    last_used = -4,
     _,
 
     // TODO: check non-exhaustive enums

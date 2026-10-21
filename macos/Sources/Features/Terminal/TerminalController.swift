@@ -55,6 +55,9 @@ class TerminalController: BaseTerminalController, TabGroupCloseCoordinator.Contr
     /// For example, terminals executing custom scripts are not restorable.
     private var restorable: Bool = true
 
+    /// The previously selected tab in our tab group, for `last_used_tab`.
+    private weak var lastUsedTabWindow: NSWindow?
+
     /// The configuration derived from the Ghostty config so we don't need to rely on references.
     private(set) var derivedConfig: DerivedConfig
 
@@ -443,6 +446,7 @@ class TerminalController: BaseTerminalController, TabGroupCloseCoordinator.Contr
 
         // Create a new window and add it to the parent
         let controller = TerminalController.init(ghostty, withBaseConfig: baseConfig)
+        controller.lastUsedTabWindow = parent
         controller.isBackgroundOpaque = parentController.isBackgroundOpaque
         guard let window = controller.window else { return controller }
 
@@ -1268,6 +1272,14 @@ class TerminalController: BaseTerminalController, TabGroupCloseCoordinator.Contr
         super.windowDidBecomeKey(notification)
         self.relabelTabs()
         self.fixTabBar()
+
+        // Every other tab in our group now has us as its most recently used tab.
+        if let window, let tabGroup = window.tabGroup {
+            for case let controller as TerminalController in tabGroup.windows.map(\.windowController)
+            where controller !== self {
+                controller.lastUsedTabWindow = window
+            }
+        }
     }
 
     override func windowDidMove(_ notification: Notification) {
@@ -1643,6 +1655,11 @@ class TerminalController: BaseTerminalController, TabGroupCloseCoordinator.Contr
                 }
             } else if tabIndex == GHOSTTY_GOTO_TAB_LAST.rawValue {
                 finalIndex = tabbedWindows.count - 1
+            } else if tabIndex == GHOSTTY_GOTO_TAB_LAST_USED.rawValue {
+                guard let lastUsedTabWindow,
+                      lastUsedTabWindow != selectedWindow,
+                      let index = tabbedWindows.firstIndex(of: lastUsedTabWindow) else { return }
+                finalIndex = index
             } else {
                 return
             }
