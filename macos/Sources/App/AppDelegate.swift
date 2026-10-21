@@ -290,6 +290,12 @@ class AppDelegate: NSObject,
         )
         NotificationCenter.default.addObserver(
             self,
+            selector: #selector(surfaceAttentionDidChange(_:)),
+            name: .ghosttyAttentionDidChange,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
             selector: #selector(ghosttyNewWindow(_:)),
             name: Ghostty.Notification.ghosttyNewWindow,
             object: nil)
@@ -745,6 +751,10 @@ class AppDelegate: NSObject,
         }
     }
 
+    @objc private func surfaceAttentionDidChange(_ notification: Notification) {
+        syncDockBadge()
+    }
+
     @objc private func terminalWindowHasBell(_ notification: Notification) {
         guard notification.object is BaseTerminalController else { return }
         syncDockBadge()
@@ -822,8 +832,13 @@ class AppDelegate: NSObject,
         let bellCount = NSApp.windows
             .compactMap { $0.windowController as? BaseTerminalController }
             .reduce(0) { $0 + ($1.bell ? 1 : 0) }
-        let wantsBadge = ghostty.config.bellFeatures.contains(.attention) && bellCount > 0
-        let label = wantsBadge ? (bellCount > 99 ? "99+" : String(bellCount)) : nil
+        // Surfaces needing attention win; otherwise fall back to upstream bell-window count.
+        let attentionCount = NSApp.windows
+            .compactMap { $0.windowController as? BaseTerminalController }
+            .reduce(0) { n, c in n + c.surfaceTree.filter { $0.attentionSince != nil }.count }
+        let count = attentionCount > 0 ? attentionCount
+            : (ghostty.config.bellFeatures.contains(.attention) ? bellCount : 0)
+        let label = count > 0 ? (count > 99 ? "99+" : String(count)) : nil
         NSApp.dockTile.badgeLabel = label
         NSApp.dockTile.display()
     }

@@ -1089,6 +1089,17 @@ palette: Palette = .{},
 /// Available since: 1.1.0
 @"split-divider-color": ?Color = null,
 
+/// The color of the ring drawn around a split that needs attention: it rang
+/// the bell or posted a desktop notification while unfocused. The ring, the
+/// tab title dot and the dock badge clear when the split is focused. Jump to
+/// the oldest such split with the `goto_attention` action, e.g.
+/// `keybind = cmd+shift+a=goto_attention` (the default on macOS).
+///
+/// Specified as either hex (`#RRGGBB` or `RRGGBB`) or a named X11 color.
+///
+/// Only implemented on macOS.
+@"attention-color": Color = .{ .r = 0xFF, .g = 0xB0, .b = 0x3B },
+
 /// Control when Ghostty preserves a zoomed split. Under normal circumstances,
 /// any operation that changes focus or layout of the split tree in a window
 /// will unzoom any zoomed split. This configuration allows you to control
@@ -7253,6 +7264,11 @@ pub const Keybinds = struct {
                 alloc,
                 .{ .key = .{ .unicode = 'a' }, .mods = .{ .super = true } },
                 .{ .select_all = {} },
+            );
+            try self.set.put(
+                alloc,
+                .{ .key = .{ .unicode = 'a' }, .mods = .{ .super = true, .shift = true } },
+                .{ .goto_attention = {} },
             );
 
             // Undo/redo

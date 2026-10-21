@@ -563,6 +563,16 @@ extension Ghostty {
             )
         }
 
+        var attentionColor: Color {
+            var color: ghostty_config_color_s = .init()
+            let key = "attention-color"
+            guard let config = self.config,
+                  ghostty_config_get(config, &color, key, UInt(key.lengthOfBytes(using: .utf8))) else {
+                return Color(red: 1.0, green: 0.69, blue: 0.23)
+            }
+            return .init(red: Double(color.r) / 255, green: Double(color.g) / 255, blue: Double(color.b) / 255)
+        }
+
         var quickTerminalPosition: QuickTerminalPosition {
             guard let config = self.config else { return .top }
             var v: UnsafePointer<Int8>?

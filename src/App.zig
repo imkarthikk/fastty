@@ -464,6 +464,7 @@ pub fn performAction(
         .toggle_quick_terminal => _ = try rt_app.performAction(.app, .toggle_quick_terminal, {}),
         .toggle_visibility => _ = try rt_app.performAction(.app, .toggle_visibility, {}),
         .check_for_updates => _ = try rt_app.performAction(.app, .check_for_updates, {}),
+        .goto_attention => _ = try rt_app.performAction(.app, .goto_attention, {}),
         .show_gtk_inspector => _ = try rt_app.performAction(.app, .show_gtk_inspector, {}),
         .clear_broadcast_groups => self.clearBroadcastGroups(rt_app),
         .undo => _ = try rt_app.performAction(.app, .undo, {}),

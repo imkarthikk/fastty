@@ -136,6 +136,13 @@ extension Ghostty {
                     BellBorderOverlay(bell: surfaceView.bell)
                 }
 
+                // Agent attention ring: bell/notification while unfocused, cleared on focus.
+                if surfaceView.attentionSince != nil {
+                    Rectangle()
+                        .strokeBorder(ghostty.config.attentionColor, lineWidth: 2)
+                        .allowsHitTesting(false)
+                }
+
                 // Show a highlight effect when this surface needs attention
                 HighlightOverlay(highlighted: surfaceView.highlighted)
 

@@ -317,6 +317,9 @@ extension Notification.Name {
     /// Ring the bell
     static let ghosttyBellDidRing = Notification.Name("com.mitchellh.ghostty.ghosttyBellDidRing")
 
+    /// A surface's attentionSince changed
+    static let ghosttyAttentionDidChange = Notification.Name("com.mitchellh.ghostty.attentionDidChange")
+
     /// The active selection changed
     static let ghosttySelectionDidChange = Notification.Name("com.mitchellh.ghostty.ghosttySelectionDidChange")
 

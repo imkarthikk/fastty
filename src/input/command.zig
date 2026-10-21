@@ -691,6 +691,12 @@ fn actionCommands(action: Action.Key) []const Command {
             .description = i18n.N_("Check for updates to the application."),
         }},
 
+        .goto_attention => comptime &.{.{
+            .action = .goto_attention,
+            .title = i18n.N_("Go to Pane Needing Attention"),
+            .description = i18n.N_("Focus the oldest pane that rang the bell or sent a notification."),
+        }},
+
         .undo => comptime &.{.{
             .action = .undo,
             .title = i18n.N_("Undo"),
