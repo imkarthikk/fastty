@@ -107,7 +107,7 @@
 	<key>SUEnableAutomaticChecks</key>
 	<false/>
 	<key>SUPublicEDKey</key>
-	<string>wsNcGf5hirwtdXMVnYoxRIX/SqZQLMOsYlD3q3imeok=</string>
+	<string>REPLACE_WITH_FASTTY_SPARKLE_PUBLIC_KEY</string>
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>

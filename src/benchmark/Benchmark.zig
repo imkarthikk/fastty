@@ -49,7 +49,7 @@ pub fn run(
     } else void = if (builtin.target.os.tag.isDarwin()) darwin: {
         macos.os.signpost.init();
         const log = macos.os.Log.create(
-            build_config.bundle_id,
+            build_config.macos_bundle_id,
             macos.os.signpost.Category.points_of_interest,
         );
         const id = macos.os.signpost.Id.forPointer(log, self.ptr);

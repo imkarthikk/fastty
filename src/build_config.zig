@@ -57,6 +57,11 @@ pub const i18n: bool = config.i18n;
 /// avoid it in Zig coe as much as possible.
 pub const bundle_id = "com.mitchellh.ghostty";
 
+/// Fastty macOS app bundle ID: used for Application Support / cache dirs and
+/// os_log subsystem. `bundle_id` above stays as the gettext domain and the
+/// Linux resources id.
+pub const macos_bundle_id = "com.skcript.fastty";
+
 /// True if we should have "slow" runtime safety checks. The initial motivation
 /// for this was terminal page/pagelist integrity checks. These were VERY
 /// slow but very thorough. But they made it so slow that the terminal couldn't

@@ -182,7 +182,7 @@ fn macosLogger(comptime scope: @TypeOf(.EnumLiteral)) *macos.os.Log {
     // Create and attempt to store our logger. If we race with another
     // thread then we use theirs and release ours.
     const created = macos.os.Log.create(
-        build_config.bundle_id,
+        build_config.macos_bundle_id,
         @tagName(scope),
     );
     if (S.cached.cmpxchgStrong(
