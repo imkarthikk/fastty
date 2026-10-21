@@ -1205,10 +1205,37 @@ pub const Surface = struct {
             break :wd self.app.core_app.alloc.dupeSentinel(u8, cwd, 0) catch null;
         };
 
+        // Fastty agent launcher: type the agent command into the new
+        // surface's shell so it gets the user's PATH/shell integration and
+        // the pane drops back to the shell when the agent exits.
+        // ponytail: leaked like working_directory above (a few bytes/launch).
+        const initial_input: ?[*:0]const u8 = input: {
+            const want = self.core_surface.pending_agent orelse break :input null;
+            const list = self.app.config.@"agent-command".list.items;
+            if (list.len == 0) break :input null;
+            var entry: []const u8 = list[0];
+            for (list) |e| {
+                if (want.len > 0 and std.mem.startsWith(u8, e, want) and
+                    e.len > want.len and e[want.len] == '=')
+                {
+                    entry = e;
+                    break;
+                }
+            }
+            const cmd = if (std.mem.indexOfScalar(u8, entry, '=')) |i| entry[i + 1 ..] else entry;
+            break :input std.fmt.allocPrintSentinel(
+                self.app.core_app.alloc,
+                "{s}\n",
+                .{cmd},
+                0,
+            ) catch null;
+        };
+
         return .{
             .font_size = font_size,
             .working_directory = working_directory,
             .context = context,
+            .initial_input = initial_input,
         };
     }
 
