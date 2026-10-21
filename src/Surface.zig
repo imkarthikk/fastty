@@ -2253,6 +2253,7 @@ fn trimLineColumnSuffix(text: []const u8) []const u8 {
 }
 
 fn expandLeadingEnvVar(
+    environ_map: *const std.process.Environ.Map,
     path: []const u8,
     buf: []u8,
 ) ?[]const u8 {
@@ -2267,7 +2268,7 @@ fn expandLeadingEnvVar(
     // We only support the `$VAR/...` style path prefix.
     if (i < path.len and path[i] != '/') return null;
 
-    const value = std.posix.getenv(path[1..i]) orelse return null;
+    const value = environ_map.get(path[1..i]) orelse return null;
     const rest = path[i..];
     if (value.len + rest.len > buf.len) return null;
 
@@ -2284,16 +2285,24 @@ fn localPathExists(
     var path_buf_env: [std.fs.max_path_bytes]u8 = undefined;
     var path_buf_resolved: [std.fs.max_path_bytes]u8 = undefined;
 
-    var candidate = std.mem.trimRight(u8, path, " ");
+    var candidate = std.mem.trimEnd(u8, path, " ");
     if (candidate.len == 0) return false;
 
-    candidate = internal_os.expandHome(candidate, &path_buf_home) catch
-        return false;
-    candidate = expandLeadingEnvVar(candidate, &path_buf_env) orelse
-        return false;
+    if (candidate[0] == '~' or candidate[0] == '$') {
+        var environ_map = global.environMap() catch return false;
+        defer environ_map.deinit();
+        candidate = internal_os.expandHome(
+            global.io(),
+            &environ_map,
+            candidate,
+            &path_buf_home,
+        ) catch return false;
+        candidate = expandLeadingEnvVar(&environ_map, candidate, &path_buf_env) orelse
+            return false;
+    }
 
     if (std.fs.path.isAbsolute(candidate)) {
-        std.fs.accessAbsolute(candidate, .{}) catch return false;
+        std.Io.Dir.accessAbsolute(global.io(), candidate, .{}) catch return false;
         return true;
     }
 
@@ -2304,7 +2313,7 @@ fn localPathExists(
         &.{ terminal_pwd, candidate },
     ) catch return false;
 
-    std.fs.accessAbsolute(resolved, .{}) catch return false;
+    std.Io.Dir.accessAbsolute(global.io(), resolved, .{}) catch return false;
     return true;
 }
 
@@ -2314,7 +2323,7 @@ fn existingLocalPathTarget(
     self: *Surface,
     target: []const u8,
 ) ?[]const u8 {
-    const trimmed = std.mem.trimRight(u8, target, " ");
+    const trimmed = std.mem.trimEnd(u8, target, " ");
     if (trimmed.len == 0) return null;
 
     if (self.localPathExists(trimmed)) return trimmed;
@@ -2329,7 +2338,7 @@ fn linkTargetExists(
     self: *Surface,
     target: []const u8,
 ) bool {
-    const trimmed = std.mem.trimRight(u8, target, " ");
+    const trimmed = std.mem.trimEnd(u8, target, " ");
     if (trimmed.len == 0) return false;
 
     // Non-local URLs should remain linkable regardless of filesystem state.
@@ -4713,7 +4722,7 @@ fn processLinks(self: *Surface, pos: apprt.CursorPos) !bool {
             defer self.alloc.free(str);
 
             const open_target = blk: {
-                const trimmed = std.mem.trimRight(u8, str, " ");
+                const trimmed = std.mem.trimEnd(u8, str, " ");
 
                 // Keep non-local URLs and file URLs intact; they aren't path-only
                 // strings and may include characters that are significant.
