@@ -38,6 +38,15 @@ here:
 | `zig build dist`                | Builds a source tarball                                                                                                |
 | `zig build distcheck`           | Builds and validates a source tarball                                                                                  |
 
+## Releasing (Fastty tip)
+
+Run `dist/macos/release-tip-local.sh` from a clean `main` on a Mac. It builds, signs,
+notarizes, writes the Sparkle appcast, force-moves the `tip` tag and uploads to the `tip`
+GitHub release. Needs: a "Developer ID Application" identity in the login keychain;
+keychain items `fastty-asc-notary-key`, `fastty-asc-notary-key-id`, `fastty-asc-notary-issuer`
+(account `fastty`); the Sparkle EdDSA key under account `fastty`; `gh auth login`; Node (`npx`).
+`SKIP_UPLOAD=1` / `SKIP_NOTARIZE=1` for dry runs. CI's `release-tip.yml` is a manual fallback.
+
 ## Extra Dependencies
 
 ### Linux

@@ -1,11 +1,9 @@
-# Fastty tip: every push to main ships a macOS build to the rolling `tip`
+# Fastty tip (manual fallback; normally run dist/macos/release-tip-local.sh) ships a macOS build to the rolling `tip`
 # GitHub pre-release, plus a Sparkle appcast.xml next to it.
 # Trimmed from Ghostty's release-tip.yml (macOS job only).
 # Codesign/notarize steps run only when their secrets exist; otherwise the
 # app is ad-hoc signed.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 name: Release Tip
