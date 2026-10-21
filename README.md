@@ -2,7 +2,7 @@
 <h1>
 <p align="center">
   <img src="https://github.com/user-attachments/assets/fe853809-ba8b-400b-83ab-a9a0da25be8a" alt="Logo" width="128">
-  <br>Ghostty
+  <br>Fastty
 </h1>
   <p align="center">
     Fast, native, feature-rich terminal emulator pushing modern features.
@@ -20,6 +20,11 @@
     <a href="HACKING.md">Developing</a>
   </p>
 </p>
+
+> **Fastty is a fork of [Ghostty](https://github.com/ghostty-org/ghostty)** by Mitchell Hashimoto
+> and the Ghostty contributors, MIT licensed. Fastty's goal is to merge upstream
+> improvements and community PRs faster. It is not affiliated with or endorsed by
+> the Ghostty project.
 
 ## About
 
