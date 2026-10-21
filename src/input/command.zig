@@ -679,6 +679,12 @@ fn actionCommands(action: Action.Key) []const Command {
             .description = i18n.N_("Toggle the background opacity of a window that started transparent."),
         }},
 
+        .toggle_macos_option_as_alt => comptime &.{.{
+            .action = .toggle_macos_option_as_alt,
+            .title = "Toggle Option as Alt on macOS",
+            .description = "Toggle whether the macOS Option keys act as Alt",
+        }},
+
         .check_for_updates => comptime &.{.{
             .action = .check_for_updates,
             .title = i18n.N_("Check for Updates"),
