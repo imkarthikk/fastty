@@ -1,12 +1,11 @@
 """
-This script is used to update the appcast.xml file for Ghostty releases.
+This script is used to update the appcast.xml file for Fastty releases.
 The script is currently hardcoded to only work for tip releases and therefore
 doesn't have rich release notes, hardcodes the URL to the tip bucket, etc.
 
 This expects the following files in the current directory:
     - sign_update.txt - contains the output from "sign_update" in the Sparkle
       framework for the current build.
-    - appcast.xml - the existing appcast file.
 
 And the following environment variables to be set:
     - GHOSTTY_BUILD - the build number
@@ -23,7 +22,7 @@ now = datetime.now(timezone.utc)
 build = os.environ["GHOSTTY_BUILD"]
 commit = os.environ["GHOSTTY_COMMIT"]
 commit_long = os.environ["GHOSTTY_COMMIT_LONG"]
-repo = "https://github.com/ghostty-org/ghostty"
+repo = "https://github.com/imkarthikk/fastty"
 
 # Read our sign_update output
 with open("sign_update.txt", "r") as f:
@@ -42,32 +41,14 @@ namespaces = { "sparkle": "http://www.andymatuschak.org/xml-namespaces/sparkle" 
 for prefix, uri in namespaces.items():
     ET.register_namespace(prefix, uri)
 
-# Open our existing appcast and find the channel element. This is where
-# we'll add our new item.
-et = ET.parse('appcast.xml')
+# The tip release keeps a single rolling Fastty.dmg, so the appcast only
+# ever holds the latest item (older items would point at the same URL with
+# a stale signature).
+# Items below use literal "sparkle:" names, so declare the prefix literally.
+et = ET.ElementTree(ET.fromstring('<rss version="2.0"><channel><title>Fastty</title></channel></rss>'))
+et.getroot().set("xmlns:sparkle", namespaces["sparkle"])
 channel = et.find("channel")
-
-# Remove any items with the same version. If we have multiple items with
-# the same version, Sparkle will report invalid signatures if it picks
-# the wrong one when updating.
-for item in channel.findall("item"):
-    version = item.find("sparkle:version", namespaces)
-    if version is not None and version.text == build:
-        channel.remove(item)
-
-    # We also remove any item that doesn't have a pubDate. This should
-    # never happen but it prevents us from having to deal with it later.
-    if item.find("pubDate") is None:
-        channel.remove(item)
-
-# Prune the oldest items if we have more than a limit.
-prune_amount = 15
 pubdate_format = "%a, %d %b %Y %H:%M:%S %z"
-items = channel.findall("item")
-items.sort(key=lambda item: datetime.strptime(item.find("pubDate").text, pubdate_format))
-if len(items) > prune_amount:
-    for item in items[:-prune_amount]:
-        channel.remove(item)
 
 # Create the item using some absolutely terrible XML manipulation.
 item = ET.SubElement(channel, "item")
@@ -94,7 +75,7 @@ commit history <a href="{repo}">on GitHub</a> for all changes.
 </p>
 """
 elem = ET.SubElement(item, "enclosure")
-elem.set("url", f"https://tip.files.ghostty.org/{commit_long}/Ghostty.dmg")
+elem.set("url", f"{repo}/releases/download/tip/Fastty.dmg")
 elem.set("type", "application/octet-stream")
 for key, value in attrs.items():
     elem.set(key, value)
