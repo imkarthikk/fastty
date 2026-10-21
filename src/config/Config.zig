@@ -999,6 +999,13 @@ palette: Palette = .{},
 /// The default value is "3" for discrete devices and "1" for precision devices.
 @"mouse-scroll-multiplier": MouseScrollMultiplier = .default,
 
+/// If true, when mouse reporting is enabled (e.g. SGR 1006), emit a single
+/// wheel event per scroll gesture regardless of the computed scroll delta.
+/// This prevents `mouse-scroll-multiplier` from inflating the number of
+/// events reported to TUIs (tmux, vim, etc.). Normal scrollback scrolling
+/// is unaffected.
+@"mouse-scroll-single-event": bool = false,
+
 /// The opacity level (opposite of transparency) of the background. A value of
 /// 1 is fully opaque and a value of 0 is fully transparent. A value less than 0
 /// or greater than 1 will be clamped to the nearest valid value.

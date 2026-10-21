@@ -324,6 +324,7 @@ const DerivedConfig = struct {
     mouse_hide_while_typing: bool,
     mouse_reporting: bool,
     mouse_scroll_multiplier: configpkg.MouseScrollMultiplier,
+    mouse_scroll_single_event: bool,
     mouse_shift_capture: configpkg.MouseShiftCapture,
     fullscreen: configpkg.Fullscreen,
     macos_non_native_fullscreen: configpkg.NonNativeFullscreen,
@@ -406,6 +407,7 @@ const DerivedConfig = struct {
             .mouse_hide_while_typing = config.@"mouse-hide-while-typing",
             .mouse_reporting = config.@"mouse-reporting",
             .mouse_scroll_multiplier = config.@"mouse-scroll-multiplier",
+            .mouse_scroll_single_event = config.@"mouse-scroll-single-event",
             .mouse_shift_capture = config.@"mouse-shift-capture",
             .fullscreen = config.fullscreen,
             .macos_non_native_fullscreen = config.@"macos-non-native-fullscreen",
@@ -3730,7 +3732,8 @@ pub fn scrollCallback(
 
         // If we're scrolling up or down, then send a mouse event.
         if (self.isMouseReporting()) {
-            for (0..@abs(y.delta)) |_| {
+            const single = self.config.mouse_scroll_single_event;
+            for (0..if (single) @min(1, @abs(y.delta)) else @abs(y.delta)) |_| {
                 const pos = try self.rt_surface.getCursorPos();
                 self.mouseReport(switch (y.direction()) {
                     .up_right => .four,
@@ -3738,7 +3741,7 @@ pub fn scrollCallback(
                 }, .press, self.mouse.mods, pos);
             }
 
-            for (0..@abs(x.delta)) |_| {
+            for (0..if (single) @min(1, @abs(x.delta)) else @abs(x.delta)) |_| {
                 const pos = try self.rt_surface.getCursorPos();
                 self.mouseReport(switch (x.direction()) {
                     .up_right => .six,
