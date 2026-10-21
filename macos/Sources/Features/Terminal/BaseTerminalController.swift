@@ -889,10 +889,14 @@ class BaseTerminalController: NSWindowController,
            surfaceTree.contains(titleSurface) {
             // If we have a surface, we want to listen for title changes.
             titleSurface.$title
-                .combineLatest(titleSurface.$bell)
-                .map { [weak self] title, bell in
+                .combineLatest(
+                    titleSurface.$bell,
+                    surfaceValuesPublisher(valueKeyPath: \.attentionSince, publisherKeyPath: \.$attentionSince)
+                        .map { $0.values.contains { $0 != nil } }
+                        .prepend(false))
+                .map { [weak self] title, bell, attention in
                     guard let self else { return "" }
-                    return Self.computeTitle(title: title, bell: bell, config: self.ghostty.config)
+                    return Self.computeTitle(title: title, bell: bell, attention: attention, config: self.ghostty.config)
                 }
                 .sink { [weak self] in self?.titleDidChange(to: $0) }
                 .store(in: &focusedSurfaceCancellables)
@@ -902,8 +906,9 @@ class BaseTerminalController: NSWindowController,
         }
     }
 
-    static func computeTitle(title: String, bell: Bool, config: Ghostty.Config) -> String {
+    static func computeTitle(title: String, bell: Bool, attention: Bool = false, config: Ghostty.Config) -> String {
         var result = title
+        if attention { result = "● \(result)" }
         if bell && config.bellFeatures.contains(.title) {
             result = "🔔 \(result)"
         }

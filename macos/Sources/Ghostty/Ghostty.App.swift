@@ -743,6 +743,9 @@ extension Ghostty {
             case GHOSTTY_ACTION_CHECK_FOR_UPDATES:
                 checkForUpdates(app)
 
+            case GHOSTTY_ACTION_GOTO_ATTENTION:
+                return gotoAttention()
+
             case GHOSTTY_ACTION_OPEN_URL:
                 return openURL(action.action.open_url)
 
@@ -806,6 +809,20 @@ extension Ghostty {
             if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
                 appDelegate.checkForUpdates(nil)
             }
+        }
+
+        /// Focus the oldest surface needing attention across all windows/tabs.
+        private static func gotoAttention() -> Bool {
+            let surface = NSApp.windows
+                .compactMap { $0.windowController as? BaseTerminalController }
+                .flatMap { Array($0.surfaceTree) }
+                .compactMap { s in s.attentionSince.map { (s, $0) } }
+                .min { $0.1 < $1.1 }?.0
+            guard let surface else { return false }
+            NSApp.activate(ignoringOtherApps: true)
+            surface.window?.makeKeyAndOrderFront(nil)
+            Ghostty.moveFocus(to: surface)
+            return true
         }
 
         private static func openURL(
@@ -1668,6 +1685,7 @@ extension Ghostty {
             title: String,
             body: String,
             requireFocus: Bool = true) {
+            DispatchQueue.main.async { surfaceView.requestAttention() }
             let center = UNUserNotificationCenter.current()
             center.requestAuthorization(options: [.alert, .sound]) { _, error in
                 if let error = error {

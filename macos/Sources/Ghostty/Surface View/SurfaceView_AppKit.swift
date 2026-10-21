@@ -109,6 +109,17 @@ extension Ghostty {
         /// True when the bell is active. This is set inactive on focus or event.
         @Published private(set) var bell: Bool = false
 
+        /// When this surface started needing attention (bell or desktop notification
+        /// while unfocused). Cleared on focus. Drives the attention ring, tab dot,
+        /// dock badge and the goto_attention action.
+        @Published private(set) var attentionSince: Date? {
+            didSet { NotificationCenter.default.post(name: .ghosttyAttentionDidChange, object: self) }
+        }
+
+        func requestAttention() {
+            if !focused && attentionSince == nil { attentionSince = Date() }
+        }
+
         /// The border color for this surface's broadcast input group, or nil if
         /// the surface is not in a group. Updated by the core through the
         /// sync_broadcast_group apprt action.
@@ -473,6 +484,7 @@ extension Ghostty {
 
                 // We unset our bell state if we gained focus
                 bell = false
+                if attentionSince != nil { attentionSince = nil }
 
                 // Remove any notifications for this surface once we gain focus.
                 if !notificationIdentifiers.isEmpty {
@@ -832,6 +844,7 @@ extension Ghostty {
         @objc private func ghosttyBellDidRing(_ notification: SwiftUI.Notification) {
             // Bell state goes to true
             bell = true
+            requestAttention()
         }
 
         @objc private func windowDidChangeScreen(notification: SwiftUI.Notification) {

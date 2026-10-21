@@ -927,6 +927,13 @@ pub const Action = union(enum) {
     /// Only implemented on macOS.
     check_for_updates,
 
+    /// Focus the oldest surface that needs attention (it rang the bell or
+    /// posted a desktop notification while unfocused), across all windows
+    /// and tabs. Does nothing if no surface needs attention.
+    ///
+    /// Only implemented on macOS.
+    goto_attention,
+
     /// Undo the last undoable action for the focused surface or terminal,
     /// if possible. This can undo actions such as closing tabs or
     /// windows.
@@ -1437,6 +1444,7 @@ pub const Action = union(enum) {
             .toggle_quick_terminal,
             .toggle_visibility,
             .check_for_updates,
+            .goto_attention,
             .show_gtk_inspector,
             .clear_broadcast_groups,
             => .app,

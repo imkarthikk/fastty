@@ -370,6 +370,9 @@ pub const Action = union(Key) {
     /// split or the window is fullscreen.
     resize_window: ResizeWindow,
 
+    /// Focus the oldest surface that needs attention. macOS only.
+    goto_attention,
+
     /// Sync with: ghostty_action_tag_e
     pub const Key = enum(c_int) {
         quit,
@@ -443,6 +446,7 @@ pub const Action = union(Key) {
         move_tab_to_new_window,
         sync_broadcast_group,
         resize_window,
+        goto_attention,
 
         test "ghostty.h Action.Key" {
             try lib.checkGhosttyHEnum(Key, "GHOSTTY_ACTION_");
